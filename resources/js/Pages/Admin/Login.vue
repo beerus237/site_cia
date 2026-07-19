@@ -28,15 +28,22 @@
               :type="showPassword ? 'text' : 'password'"
               required
               autofocus
+              ref="passwordInput"
               class="field-input pr-11"
               placeholder="••••••••"
             />
             <button
               type="button"
-              class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-brand-600"
-              @click="showPassword = !showPassword"
+              class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-brand-600 z-10"
+              @mousedown.prevent="togglePassword"
+              @touchstart.prevent="togglePassword"
+              @click.prevent
+              aria-label="Afficher ou masquer le mot de passe"
             >
-              <component :is="showPassword ? EyeOffIcon : EyeIcon" class="h-4.5 w-4.5" />
+              <component 
+                :is="showPassword ? EyeOffIcon : EyeIcon" 
+                class="h-4.5 w-4.5 pointer-events-none" 
+              />
             </button>
           </div>
           <p v-if="form.errors.password" class="field-error">{{ form.errors.password }}</p>
@@ -56,18 +63,47 @@
 
 <script setup>
 import { Head, Link, useForm } from '@inertiajs/vue3'
-import { ref } from 'vue'
+import { ref, nextTick } from 'vue'
 import { EyeIcon, EyeOffIcon, LockKeyholeIcon } from 'lucide-vue-next'
 
+// ============ ÉTAT ============
 const showPassword = ref(false)
+const passwordInput = ref(null)
 
+// ============ FORMULAIRE ============
 const form = useForm({
   password: '',
 })
 
+// ============ MÉTHODES ============
 const submit = () => {
   form.post('/admin/login', {
     onFinish: () => form.reset('password'),
+  })
+}
+
+/**
+ * Bascule l'affichage du mot de passe
+ * Gère correctement les événements PC et mobile
+ */
+const togglePassword = (event) => {
+  // Empêcher la propagation et le comportement par défaut
+  if (event) {
+    event.preventDefault()
+    event.stopPropagation()
+  }
+  
+  // Inverser l'état
+  showPassword.value = !showPassword.value
+  
+  // Restaurer le focus sur l'input après le toggle
+  nextTick(() => {
+    if (passwordInput.value) {
+      passwordInput.value.focus()
+      // Placer le curseur à la fin du texte
+      const length = passwordInput.value.value.length
+      passwordInput.value.setSelectionRange(length, length)
+    }
   })
 }
 </script>
