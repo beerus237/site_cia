@@ -25,19 +25,22 @@
           <div class="relative">
             <input
               v-model="form.password"
-              :type="showPassword ? 'text' : 'password'"
+              :type="passwordFieldType"
               required
-              autofocus
               ref="passwordInput"
               class="field-input pr-11"
               placeholder="••••••••"
+              @focus="handleFocus"
+              @blur="handleBlur"
+              @click.stop
+              @touchstart.stop
             />
             <button
               type="button"
               class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-brand-600 z-10"
-              @mousedown.prevent="togglePassword"
-              @touchstart.prevent="togglePassword"
-              @click.prevent
+              @pointerdown.prevent="togglePassword"
+              @click.stop
+              @touchstart.stop
               aria-label="Afficher ou masquer le mot de passe"
             >
               <component 
@@ -49,7 +52,13 @@
           <p v-if="form.errors.password" class="field-error">{{ form.errors.password }}</p>
         </div>
 
-        <button type="submit" class="btn-primary w-full justify-center" :disabled="form.processing">
+        <button 
+          type="submit" 
+          class="btn-primary w-full justify-center" 
+          :disabled="form.processing"
+          @pointerdown.stop
+          @click.stop
+        >
           {{ form.processing ? 'Connexion…' : 'Se connecter' }}
         </button>
       </form>
@@ -63,47 +72,90 @@
 
 <script setup>
 import { Head, Link, useForm } from '@inertiajs/vue3'
-import { ref, nextTick } from 'vue'
+import { ref, computed, nextTick } from 'vue'
 import { EyeIcon, EyeOffIcon, LockKeyholeIcon } from 'lucide-vue-next'
 
 // ============ ÉTAT ============
 const showPassword = ref(false)
 const passwordInput = ref(null)
+const isFocused = ref(false)
 
 // ============ FORMULAIRE ============
 const form = useForm({
   password: '',
 })
 
+// ============ COMPUTED ============
+const passwordFieldType = computed(() => {
+  return showPassword.value ? 'text' : 'password'
+})
+
 // ============ MÉTHODES ============
 const submit = () => {
+  // Éviter les soumissions multiples
+  if (form.processing) return
+  
   form.post('/admin/login', {
-    onFinish: () => form.reset('password'),
+    onFinish: () => {
+      form.reset('password')
+    },
   })
 }
 
-/**
- * Bascule l'affichage du mot de passe
- * Gère correctement les événements PC et mobile
- */
 const togglePassword = (event) => {
-  // Empêcher la propagation et le comportement par défaut
+  // 🔥 CRUCIAL : Empêcher toute propagation
   if (event) {
     event.preventDefault()
     event.stopPropagation()
+    event.stopImmediatePropagation()
   }
   
   // Inverser l'état
   showPassword.value = !showPassword.value
   
-  // Restaurer le focus sur l'input après le toggle
+  // Restaurer le focus APRÈS le toggle
   nextTick(() => {
     if (passwordInput.value) {
       passwordInput.value.focus()
-      // Placer le curseur à la fin du texte
+      // Placer le curseur à la fin
       const length = passwordInput.value.value.length
       passwordInput.value.setSelectionRange(length, length)
     }
   })
 }
+
+// Gestionnaires de focus pour éviter les re-rendus
+const handleFocus = () => {
+  isFocused.value = true
+}
+
+const handleBlur = () => {
+  isFocused.value = false
+}
 </script>
+
+<style scoped>
+/* 🔥 FIX : Empêcher les animations ou transitions qui pourraient causer des freezes */
+input.field-input {
+  transition: none !important;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+button {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Si tu as des animations sur le bouton submit, désactive-les temporairement */
+.btn-primary {
+  transition: none !important;
+}
+
+/* Pour les mobiles, éviter tout comportement étrange */
+input,
+button {
+  -webkit-user-select: none;
+  user-select: none;
+}
+</style>
