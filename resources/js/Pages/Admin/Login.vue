@@ -1,73 +1,77 @@
 <template>
-  <Head title="Connexion admin" />
+  <Head :title="content.title" />
 
-  <div class="page-hero flex min-h-screen flex-col items-center justify-center px-4 py-10">
+  <section class="page-hero flex items-center justify-center py-32">
     <div class="page-hero-orb-1" />
     <div class="page-hero-orb-2" />
 
-    <Link href="/" class="relative mb-8 flex flex-col items-center gap-3">
-      <img src="/images/logos/logo-club.jpeg" alt="Logo Club IA ENSPD" class="h-16 w-16 rounded-2xl object-cover shadow-card ring-1 ring-brand-100" />
-      <span class="text-sm font-bold uppercase tracking-[0.25em] text-brand-700">Club IA-ENSPD</span>
-    </Link>
-
-    <div class="relative w-full overflow-hidden rounded-2xl border border-brand-100 bg-white px-6 py-7 shadow-card-hover sm:max-w-md sm:px-8 sm:py-8">
-      <div class="mb-6 text-center">
-        <div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-gradient">
-          <LockKeyholeIcon class="h-5.5 w-5.5 text-white" />
-        </div>
-        <h1 class="text-lg font-bold text-slate-900">Espace administrateur</h1>
-        <p class="mt-1 text-sm text-slate-500">Entrez le mot de passe pour accéder au tableau de bord</p>
+    <div class="relative mx-auto max-w-lg px-4 text-center sm:px-6">
+      <div class="mx-auto mb-8 flex h-20 w-20 items-center justify-center rounded-3xl bg-brand-gradient shadow-card">
+        <component :is="content.icon" class="h-9 w-9 text-white" />
       </div>
 
-      <form class="space-y-5" @submit.prevent="submit">
-        <div>
-          <label class="field-label">Mot de passe</label>
-          <div class="relative">
-            <input
-              v-model="form.password"
-              :type="showPassword ? 'text' : 'password'"
-              required
-              autofocus
-              class="field-input pr-11"
-              placeholder="••••••••"
-            />
-            <button
-              type="button"
-              class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-brand-600"
-              @click="showPassword = !showPassword"
-            >
-              <component :is="showPassword ? EyeOffIcon : EyeIcon" class="h-4.5 w-4.5" />
-            </button>
-          </div>
-          <p v-if="form.errors.password" class="field-error">{{ form.errors.password }}</p>
-        </div>
+      <p class="text-sm font-bold uppercase tracking-[0.3em] text-brand-600">Erreur {{ status }}</p>
+      <h1 class="mt-4 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">{{ content.title }}</h1>
+      <p class="mx-auto mt-4 max-w-md text-base leading-7 text-slate-500">{{ content.message }}</p>
 
-        <button type="submit" class="btn-primary w-full justify-center" :disabled="form.processing">
-          {{ form.processing ? 'Connexion…' : 'Se connecter' }}
+      <div class="mt-10 flex flex-col justify-center gap-3 sm:flex-row">
+        <button type="button" class="btn-secondary" @click="$inertia.reload()">
+          <RefreshCwIcon class="h-4 w-4" />
+          Réessayer
         </button>
-      </form>
+        <Link href="/" class="btn-primary">
+          <HomeIcon class="h-4 w-4" />
+          Retour à l'accueil
+        </Link>
+      </div>
     </div>
-
-    <Link href="/" class="relative mt-6 text-sm font-medium text-slate-500 transition-colors hover:text-brand-600">
-      &larr; Retour au site
-    </Link>
-  </div>
+  </section>
 </template>
 
 <script setup>
-import { Head, Link, useForm } from '@inertiajs/vue3'
-import { ref } from 'vue'
-import { EyeIcon, EyeOffIcon, LockKeyholeIcon } from 'lucide-vue-next'
+import { Head, Link } from '@inertiajs/vue3'
+import { computed } from 'vue'
+import { AlertTriangleIcon, ClockIcon, HomeIcon, LockIcon, RefreshCwIcon, SearchXIcon, ServerCrashIcon } from 'lucide-vue-next'
 
-const showPassword = ref(false)
-
-const form = useForm({
-  password: '',
+const props = defineProps({
+  status: {
+    type: Number,
+    required: true,
+  },
 })
 
-const submit = () => {
-  form.post('/admin/login', {
-    onFinish: () => form.reset('password'),
-  })
+const messages = {
+  403: {
+    icon: LockIcon,
+    title: 'Accès refusé',
+    message: "Vous n'avez pas la permission d'accéder à cette page.",
+  },
+  404: {
+    icon: SearchXIcon,
+    title: 'Page introuvable',
+    message: "La page que vous cherchez n'existe pas ou a été déplacée.",
+  },
+  419: {
+    icon: ClockIcon,
+    title: 'Session expirée',
+    message: 'Votre session a expiré par inactivité. Veuillez réessayer.',
+  },
+  429: {
+    icon: AlertTriangleIcon,
+    title: 'Trop de tentatives',
+    message: 'Vous avez effectué trop de requêtes. Merci de patienter un instant avant de réessayer.',
+  },
+  500: {
+    icon: ServerCrashIcon,
+    title: 'Erreur serveur',
+    message: "Une erreur inattendue s'est produite de notre côté. Notre équipe a été informée.",
+  },
+  503: {
+    icon: ServerCrashIcon,
+    title: 'Maintenance en cours',
+    message: 'Le site est en maintenance. Merci de revenir dans quelques instants.',
+  },
 }
+
+const content = computed(() => messages[props.status] || messages[500])
 </script>
