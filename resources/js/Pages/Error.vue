@@ -1,25 +1,44 @@
 <template>
   <Head :title="content.title" />
 
-  <section class="page-hero flex items-center justify-center py-32">
-    <div class="page-hero-orb-1" />
-    <div class="page-hero-orb-2" />
+  <section class="page-hero relative flex items-center justify-center overflow-hidden py-32">
+    <!-- Décorations : ne capturent pas les clics -->
+    <div class="page-hero-orb-1 pointer-events-none" />
+    <div class="page-hero-orb-2 pointer-events-none" />
 
-    <div class="relative mx-auto max-w-lg px-4 text-center sm:px-6">
-      <div class="mx-auto mb-8 flex h-20 w-20 items-center justify-center rounded-3xl bg-brand-gradient shadow-card">
+    <div class="relative z-10 mx-auto max-w-lg px-4 text-center sm:px-6">
+      <div
+        class="mx-auto mb-8 flex h-20 w-20 items-center justify-center rounded-3xl bg-brand-gradient shadow-card"
+      >
         <component :is="content.icon" class="h-9 w-9 text-white" />
       </div>
 
-      <p class="text-sm font-bold uppercase tracking-[0.3em] text-brand-600">Erreur {{ status }}</p>
-      <h1 class="mt-4 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">{{ content.title }}</h1>
-      <p class="mx-auto mt-4 max-w-md text-base leading-7 text-slate-500">{{ content.message }}</p>
+      <p class="text-sm font-bold uppercase tracking-[0.3em] text-brand-600">
+        Erreur {{ status }}
+      </p>
+
+      <h1 class="mt-4 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
+        {{ content.title }}
+      </h1>
+
+      <p class="mx-auto mt-4 max-w-md text-base leading-7 text-slate-500">
+        {{ content.message }}
+      </p>
 
       <div class="mt-10 flex flex-col justify-center gap-3 sm:flex-row">
-        <button type="button" class="btn-secondary" @click="$inertia.reload()">
+        <button
+          type="button"
+          class="btn-secondary relative z-20"
+          @click="$inertia.reload()"
+        >
           <RefreshCwIcon class="h-4 w-4" />
           Réessayer
         </button>
-        <Link href="/" class="btn-primary">
+
+        <Link
+          href="/"
+          class="btn-primary relative z-20"
+        >
           <HomeIcon class="h-4 w-4" />
           Retour à l'accueil
         </Link>
@@ -31,7 +50,15 @@
 <script setup>
 import { Head, Link } from '@inertiajs/vue3'
 import { computed } from 'vue'
-import { AlertTriangleIcon, ClockIcon, HomeIcon, LockIcon, RefreshCwIcon, SearchXIcon, ServerCrashIcon } from 'lucide-vue-next'
+import {
+  AlertTriangleIcon,
+  ClockIcon,
+  HomeIcon,
+  LockIcon,
+  RefreshCwIcon,
+  SearchXIcon,
+  ServerCrashIcon,
+} from 'lucide-vue-next'
 
 const props = defineProps({
   status: {
@@ -59,17 +86,20 @@ const messages = {
   429: {
     icon: AlertTriangleIcon,
     title: 'Trop de tentatives',
-    message: 'Vous avez effectué trop de requêtes. Merci de patienter un instant avant de réessayer.',
+    message:
+      'Vous avez effectué trop de requêtes. Merci de patienter un instant avant de réessayer.',
   },
   500: {
     icon: ServerCrashIcon,
     title: 'Erreur serveur',
-    message: "Une erreur inattendue s'est produite de notre côté. Notre équipe a été informée.",
+    message:
+      "Une erreur inattendue s'est produite de notre côté. Notre équipe a été informée.",
   },
   503: {
     icon: ServerCrashIcon,
     title: 'Maintenance en cours',
-    message: 'Le site est en maintenance. Merci de revenir dans quelques instants.',
+    message:
+      'Le site est en maintenance. Merci de revenir dans quelques instants.',
   },
 }
 
